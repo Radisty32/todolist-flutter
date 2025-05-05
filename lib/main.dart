@@ -1,99 +1,111 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const TodoListApp());
-}
+void main() => runApp(ToDoApp());
 
-class TodoListApp extends StatelessWidget {
-  const TodoListApp({super.key});
-
+class ToDoApp extends StatelessWidget {
+  const ToDoApp({super.key});
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Todo List',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const TodoHomePage(),
+      title: 'To-Do List',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: ToDoHome(),
     );
   }
 }
 
-class TodoHomePage extends StatefulWidget {
-  const TodoHomePage({super.key});
+class ToDoItem {
+  String title;
+  bool isDone;
 
-  @override
-  _TodoHomePageState createState() => _TodoHomePageState();
+  ToDoItem({required this.title, this.isDone = false});
 }
 
-class _TodoHomePageState extends State<TodoHomePage> {
-  final List<String> _todos = []; // Daftar tugas
-  final TextEditingController _controller = TextEditingController(); // Untuk input teks
+class ToDoHome extends StatefulWidget {
+  const ToDoHome({super.key});
+  @override
+  ToDoHomeState createState() => ToDoHomeState();
+}
 
-  void _addTodo() {
-    final text = _controller.text;
-    if (text.isNotEmpty) {
-      setState(() {
-        _todos.add(text);
-        _controller.clear();
-      });
-    }
+class ToDoHomeState extends State<ToDoHome> {
+  final List<ToDoItem> _items = [];
+  final TextEditingController _controller = TextEditingController();
+
+  void _addItem(String title) {
+    if (title.isEmpty) return;
+    setState(() {
+      _items.add(ToDoItem(title: title));
+    });
+    _controller.clear();
   }
 
-  void _removeTodo(int index) {
+  void _toggleItem(int index) {
     setState(() {
-      _todos.removeAt(index);
+      _items[index].isDone = !_items[index].isDone;
+    });
+  }
+
+  void _removeItem(int index) {
+    setState(() {
+      _items.removeAt(index);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Daftar Tugas'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Row(
+      appBar: AppBar(title: Text('To-Do List')),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    decoration: const InputDecoration(
-                      labelText: 'Tambahkan Tugas',
+                    decoration: InputDecoration(
+                      labelText: 'New Task',
                       border: OutlineInputBorder(),
                     ),
+                    onSubmitted: _addItem,
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 10),
                 ElevatedButton(
-                  onPressed: _addTodo,
-                  child: const Text('Tambah'),
+                  onPressed: () => _addItem(_controller.text),
+                  child: Text('Add'),
                 )
               ],
             ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView.builder(
-                itemCount: _todos.length,
-                itemBuilder: (context, index) {
-                  return Card(
-                    child: ListTile(
-                      title: Text(_todos[index]),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: () => _removeTodo(index),
-                      ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _items.length,
+              itemBuilder: (context, index) {
+                final item = _items[index];
+                return ListTile(
+                  leading: Checkbox(
+                    value: item.isDone,
+                    onChanged: (_) => _toggleItem(index),
+                  ),
+                  title: Text(
+                    item.title,
+                    style: TextStyle(
+                      decoration: item.isDone
+                          ? TextDecoration.lineThrough
+                          : TextDecoration.none,
                     ),
-                  );
-                },
-              ),
-            )
-          ],
-        ),
+                  ),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _removeItem(index),
+                  ),
+                );
+              },
+            ),
+          )
+        ],
       ),
     );
   }
